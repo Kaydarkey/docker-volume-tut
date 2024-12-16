@@ -1,17 +1,23 @@
-# Use the Node.js image
-FROM node:18
+# Using a lightweight Node.js image
+FROM node:18-slim
 
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and install dependencies
-COPY package.json package-lock.json ./
-RUN npm install
+# Copying package files separately for layer caching
+COPY package*.json ./
 
-# Copy the rest of the application code
+# Installing production dependencies only
+RUN npm install --production && npm cache clean --force
+
+# Copying only necessary application code
 COPY . .
 
-# Expose port 3000
+# Setting non-root user for security
+RUN adduser --disabled-password appuser && chown -R appuser /app
+USER appuser
+
+# Expose the required port
 EXPOSE 3000
 
 # Start the application
